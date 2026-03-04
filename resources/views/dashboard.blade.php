@@ -39,7 +39,48 @@
         .danger { background:var(--danger); width:auto; padding:9px 14px; margin:0; }
         .res { margin-top:12px; font-family: monospace; font-size:.82rem; background:#111827; color:#e5e7eb; border-radius:10px; padding:10px; min-height:64px; white-space: pre-wrap; }
         .item { margin-top:8px; border:1px solid #d1d5db; border-radius:10px; padding:9px; background:#f9fafb; }
+        .item-actions { margin-top:8px; display:flex; gap:8px; }
+        .item-actions button {
+            width: auto;
+            margin: 0;
+            padding: 7px 10px;
+            font-size: .82rem;
+            border-radius: 8px;
+        }
+        .item-actions .edit { background:#1d4ed8; }
+        .item-actions .remove { background:#b91c1c; }
         .muted { color:var(--muted); font-size:.85rem; }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 60;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border: 1px solid #e5ddd1;
+            border-radius: 14px;
+            padding: 14px;
+        }
+        .modal h3 { margin: 0 0 8px; }
+        .modal-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .modal-actions button {
+            width: auto;
+            margin: 0;
+            padding: 8px 12px;
+        }
         @media (max-width: 760px) { .grid { grid-template-columns:1fr; } }
     </style>
 </head>
@@ -69,7 +110,6 @@
                 <option value="BRL">BRL - Real Brasileiro</option>
             </select>
             <button onclick="createExpense()">Salvar despesa</button>
-            <button class="secondary" onclick="loadExpenses()">Atualizar lista</button>
         </section>
 
         <section class="card">
@@ -85,12 +125,41 @@
     </section>
 </div>
 
+<div id="edit_modal_backdrop" class="modal-backdrop" onclick="closeEditModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3>Editar despesa</h3>
+        <label>Novo valor</label>
+        <input id="edit_amount" placeholder="120.50">
+        <label>Nova moeda</label>
+        <select id="edit_currency">
+            <option value="USD">USD - Dolar Americano</option>
+            <option value="EUR">EUR - Euro</option>
+            <option value="GBP">GBP - Libra Esterlina</option>
+            <option value="JPY">JPY - Iene Japones</option>
+            <option value="CAD">CAD - Dolar Canadense</option>
+            <option value="AUD">AUD - Dolar Australiano</option>
+            <option value="CHF">CHF - Franco Suico</option>
+            <option value="CNY">CNY - Yuan Chines</option>
+            <option value="ARS">ARS - Peso Argentino</option>
+            <option value="BRL">BRL - Real Brasileiro</option>
+        </select>
+        <div class="modal-actions">
+            <button class="secondary" onclick="closeEditModal()">Cancelar</button>
+            <button onclick="saveEditExpense()">Salvar</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const tokenKey = 'iem_api_token';
 const resBox = document.getElementById('res');
 const listBox = document.getElementById('list');
 const totalBox = document.getElementById('total_brl');
+const editBackdrop = document.getElementById('edit_modal_backdrop');
+const editAmount = document.getElementById('edit_amount');
+const editCurrency = document.getElementById('edit_currency');
 const token = localStorage.getItem(tokenKey);
+let editingExpenseId = null;
 
 if (!token) {
     window.location.href = '/login';
@@ -143,8 +212,46 @@ async function loadExpenses() {
             <div class="item">
                 <strong>${item.currency_code} ${item.amount_original}</strong> -> BRL ${item.amount_brl ?? '-'}<br>
                 <span class="muted">status: ${item.status} | cotacao: ${item.exchange_rate ?? '-'} | id: ${item.id}</span>
+                <div class="item-actions">
+                    <button class="edit" onclick="openEditModal(${item.id}, '${item.amount_original}', '${item.currency_code}')">Editar</button>
+                    <button class="remove" onclick="deleteExpense(${item.id})">Apagar</button>
+                </div>
             </div>
         `).join('');
+    } catch (_) {}
+}
+
+function openEditModal(id, currentAmount, currentCurrency) {
+    editingExpenseId = id;
+    editAmount.value = currentAmount;
+    editCurrency.value = (currentCurrency || 'USD').toUpperCase();
+    editBackdrop.classList.add('show');
+}
+
+function closeEditModal(event = null) {
+    if (event && event.target !== editBackdrop) return;
+    editingExpenseId = null;
+    editBackdrop.classList.remove('show');
+}
+
+async function saveEditExpense() {
+    if (!editingExpenseId) return;
+    try {
+        await api(`expenses/${editingExpenseId}`, 'PUT', {
+            amount: editAmount.value,
+            currency: (editCurrency.value || '').toUpperCase()
+        });
+        closeEditModal();
+        loadExpenses();
+    } catch (_) {}
+}
+
+async function deleteExpense(id) {
+    if (!confirm('Deseja apagar esta despesa?')) return;
+
+    try {
+        await api(`expenses/${id}`, 'DELETE');
+        loadExpenses();
     } catch (_) {}
 }
 

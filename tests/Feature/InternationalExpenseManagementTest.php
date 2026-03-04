@@ -135,4 +135,39 @@ class InternationalExpenseManagementTest extends TestCase
             ->assertJsonPath('expense.status', 'pending')
             ->assertJsonPath('expense.amount_brl', null);
     }
+
+    public function test_user_can_update_own_expense_but_cannot_update_others(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $expenseA = Expense::create([
+            'user_id' => $userA->id,
+            'amount_original' => 100.00,
+            'currency_code' => 'USD',
+            'exchange_rate' => 5.400000,
+            'amount_brl' => 540.00,
+            'status' => 'converted',
+            'converted_at' => now(),
+        ]);
+
+        Http::fake([
+            'open.er-api.com/*' => Http::response([
+                'result' => 'success',
+                'rates' => ['BRL' => 6.0],
+            ], 200),
+        ]);
+
+        Sanctum::actingAs($userB);
+        $this->putJson("/api/expenses/{$expenseA->id}", [
+            'amount' => '110.00',
+            'currency' => 'EUR',
+        ])->assertNotFound();
+
+        Sanctum::actingAs($userA);
+        $this->putJson("/api/expenses/{$expenseA->id}", [
+            'amount' => '110.00',
+            'currency' => 'EUR',
+        ])->assertOk()->assertJsonPath('expense.amount_brl', '660.00');
+    }
 }

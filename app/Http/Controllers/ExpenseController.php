@@ -22,34 +22,41 @@ class ExpenseController extends Controller
 
     public function store(StoreExpenseRequest $request, ExchangeRateService $exchangeRateService): JsonResponse
     {
-        $rate = $exchangeRateService->getRateToBrl($request->validated('currency'));
-
         $saveAsPending = $request->validated('save_as_pending_on_failure', false);
+        $conversion = $this->convertExpense($request, $exchangeRateService, $saveAsPending);
 
-        if ($rate === null && ! $saveAsPending) {
+        if ($conversion === null) {
             return response()->json([
-                'message' => 'Nao foi possivel consultar a cotacao agora. Tente novamente ou salve como pendente.',
+                'message' => 'Nao foi possivel consultar a cotacao agora.',
             ], 422);
         }
 
-        $amount = (float) $request->validated('amount');
-        $converted = $rate === null ? null : round($amount * $rate, 2);
-
         /** @var \App\Models\Expense $expense */
-        $expense = $request->user()->expenses()->create([
-            'amount_original' => $amount,
-            'currency_code' => $request->validated('currency'),
-            'exchange_rate' => $rate,
-            'amount_brl' => $converted,
-            'status' => $rate === null ? 'pending' : 'converted',
-            'api_error' => $rate === null ? 'Falha ao consultar API de cambio.' : null,
-            'converted_at' => $rate === null ? null : now(),
-        ]);
+        $expense = $request->user()->expenses()->create($conversion);
 
         return response()->json([
-            'message' => $rate === null ? 'Despesa salva como pendente.' : 'Despesa salva com conversao em BRL.',
+            'message' => $expense->status === 'pending' ? 'Despesa salva como pendente.' : 'Despesa salva com conversao em BRL.',
             'expense' => $expense,
         ], 201);
+    }
+
+    public function update(StoreExpenseRequest $request, ExchangeRateService $exchangeRateService, int $id): JsonResponse
+    {
+        $expense = $this->findOwnedExpenseOrFail($request, $id);
+        $conversion = $this->convertExpense($request, $exchangeRateService, false);
+
+        if ($conversion === null) {
+            return response()->json([
+                'message' => 'Nao foi possivel consultar a cotacao agora. Tente novamente.',
+            ], 422);
+        }
+
+        $expense->update($conversion);
+
+        return response()->json([
+            'message' => 'Despesa atualizada com sucesso.',
+            'expense' => $expense->fresh(),
+        ]);
     }
 
     public function show(Request $request, int $id): JsonResponse
@@ -75,5 +82,30 @@ class ExpenseController extends Controller
             ->expenses()
             ->whereKey($id)
             ->firstOrFail();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function convertExpense(StoreExpenseRequest $request, ExchangeRateService $exchangeRateService, bool $allowPending): ?array
+    {
+        $rate = $exchangeRateService->getRateToBrl($request->validated('currency'));
+
+        if ($rate === null && ! $allowPending) {
+            return null;
+        }
+
+        $amount = (float) $request->validated('amount');
+        $converted = $rate === null ? null : round($amount * $rate, 2);
+
+        return [
+            'amount_original' => $amount,
+            'currency_code' => $request->validated('currency'),
+            'exchange_rate' => $rate,
+            'amount_brl' => $converted,
+            'status' => $rate === null ? 'pending' : 'converted',
+            'api_error' => $rate === null ? 'Falha ao consultar API de cambio.' : null,
+            'converted_at' => $rate === null ? null : now(),
+        ];
     }
 }
