@@ -5,9 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Gestao de Despesas</title>
     <style>
-        :root { --bg:#f7f4ee; --card:#fffdf8; --text:#1f2937; --muted:#6b7280; --primary:#0f766e; --primary-2:#115e59; --border:#e5ddd1; }
+        :root { --bg:#f2efe8; --card:#fffdf8; --text:#1f2937; --muted:#6b7280; --primary:#0f766e; --primary-2:#115e59; --border:#e5ddd1; }
         * { box-sizing: border-box; }
-        body { margin:0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); }
+        body {
+            margin:0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(243, 168, 59, 0.23), transparent 35%),
+                radial-gradient(circle at 82% 16%, rgba(10, 127, 114, 0.20), transparent 32%),
+                linear-gradient(180deg, #f8f4ed 0%, var(--bg) 100%);
+            color: var(--text);
+        }
         .wrap { min-height: 100vh; display:grid; place-items:center; padding:20px; }
         .card { width:100%; max-width:460px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
         h1 { margin:0 0 6px; font-size:1.6rem; }

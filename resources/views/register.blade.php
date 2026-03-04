@@ -601,6 +601,8 @@ async function registerUser() {
 
         if (data?.errors) {
             applyFieldErrors(data.errors);
+            setFeedback('');
+            return;
         }
         setFeedback(extractErrorMessage(data), 'bad');
     } catch (_) {

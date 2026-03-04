@@ -3,18 +3,36 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard - Gestao de Despesas</title>
+    <title>Painel de Despesas - Gestao de Despesas</title>
     <style>
-        :root { --bg:#f7f4ee; --card:#fffdf8; --text:#1f2937; --muted:#6b7280; --primary:#0f766e; --primary-2:#115e59; --border:#e5ddd1; --danger:#b91c1c; }
+        :root { --bg:#f2efe8; --card:#fffdf8; --text:#1f2937; --muted:#6b7280; --primary:#0f766e; --primary-2:#115e59; --border:#e5ddd1; --danger:#b91c1c; }
         * { box-sizing: border-box; }
-        body { margin:0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); }
+        body {
+            margin:0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(243, 168, 59, 0.23), transparent 35%),
+                radial-gradient(circle at 82% 16%, rgba(10, 127, 114, 0.20), transparent 32%),
+                linear-gradient(180deg, #f8f4ed 0%, var(--bg) 100%);
+            color: var(--text);
+        }
         .container { max-width:1000px; margin:24px auto; padding:16px; }
         .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
         .topbar h1 { margin:0; font-size:1.5rem; }
+        .total-chip {
+            margin-top: 8px;
+            display: inline-block;
+            font-weight: 700;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 7px 10px;
+            border-radius: 999px;
+        }
         .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; }
         .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         label { display:block; margin:10px 0 4px; font-size:.9rem; }
-        input, button { width:100%; padding:10px 11px; border-radius:10px; border:1px solid #d7d0c4; font-size:.95rem; }
+        input, select, button { width:100%; padding:10px 11px; border-radius:10px; border:1px solid #d7d0c4; font-size:.95rem; }
         button { border:none; background:var(--primary); color:#fff; font-weight:600; cursor:pointer; margin-top:10px; }
         button:hover { background:var(--primary-2); }
         .secondary { background:#374151; }
@@ -28,7 +46,7 @@
 <body>
 <div class="container">
     <div class="topbar">
-        <h1>Dashboard</h1>
+        <h1>Painel de Despesas</h1>
         <button class="danger" onclick="logout()">Sair</button>
     </div>
 
@@ -38,16 +56,25 @@
             <label>Valor</label>
             <input id="amount" placeholder="120.50">
             <label>Moeda</label>
-            <input id="currency" placeholder="USD">
-            <label>
-                <input id="pending" type="checkbox" style="width:auto;"> Salvar como pendente se API falhar
-            </label>
+            <select id="currency">
+                <option value="USD" selected>USD - Dolar Americano</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - Libra Esterlina</option>
+                <option value="JPY">JPY - Iene Japones</option>
+                <option value="CAD">CAD - Dolar Canadense</option>
+                <option value="AUD">AUD - Dolar Australiano</option>
+                <option value="CHF">CHF - Franco Suico</option>
+                <option value="CNY">CNY - Yuan Chines</option>
+                <option value="ARS">ARS - Peso Argentino</option>
+                <option value="BRL">BRL - Real Brasileiro</option>
+            </select>
             <button onclick="createExpense()">Salvar despesa</button>
             <button class="secondary" onclick="loadExpenses()">Atualizar lista</button>
         </section>
 
         <section class="card">
             <h2>Minhas despesas</h2>
+            <div id="total_brl" class="total-chip">Total em BRL: R$ 0,00</div>
             <div id="list" class="muted">Carregando...</div>
         </section>
     </div>
@@ -62,6 +89,7 @@
 const tokenKey = 'iem_api_token';
 const resBox = document.getElementById('res');
 const listBox = document.getElementById('list');
+const totalBox = document.getElementById('total_brl');
 const token = localStorage.getItem(tokenKey);
 
 if (!token) {
@@ -70,6 +98,10 @@ if (!token) {
 
 function show(data) {
     resBox.textContent = JSON.stringify(data, null, 2);
+}
+
+function formatBrl(value) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
 }
 
 async function api(path, method='GET', body=null) {
@@ -101,6 +133,8 @@ async function loadExpenses() {
     try {
         const data = await api('expenses');
         const rows = data.data || [];
+        const total = rows.reduce((sum, item) => sum + (parseFloat(item.amount_brl) || 0), 0);
+        totalBox.textContent = `Total em BRL: ${formatBrl(total)}`;
         if (!rows.length) {
             listBox.innerHTML = '<span class="muted">Sem despesas cadastradas.</span>';
             return;
@@ -118,8 +152,7 @@ async function createExpense() {
     try {
         await api('expenses', 'POST', {
             amount: document.getElementById('amount').value,
-            currency: (document.getElementById('currency').value || '').toUpperCase(),
-            save_as_pending_on_failure: document.getElementById('pending').checked
+            currency: (document.getElementById('currency').value || '').toUpperCase()
         });
         loadExpenses();
     } catch (_) {}
