@@ -81,6 +81,9 @@
             margin: 0;
             padding: 8px 12px;
         }
+        .modal-danger {
+            background: #b91c1c;
+        }
         @media (max-width: 760px) { .grid { grid-template-columns:1fr; } }
     </style>
 </head>
@@ -150,16 +153,29 @@
     </div>
 </div>
 
+<div id="delete_modal_backdrop" class="modal-backdrop" onclick="closeDeleteModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3>Apagar despesa</h3>
+        <p style="margin:0; color:#475569;">Tem certeza que deseja remover esta despesa? Esta ação não pode ser desfeita.</p>
+        <div class="modal-actions">
+            <button class="secondary" onclick="closeDeleteModal()">Cancelar</button>
+            <button class="modal-danger" onclick="confirmDeleteExpense()">Apagar</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const tokenKey = 'iem_api_token';
 const resBox = document.getElementById('res');
 const listBox = document.getElementById('list');
 const totalBox = document.getElementById('total_brl');
 const editBackdrop = document.getElementById('edit_modal_backdrop');
+const deleteBackdrop = document.getElementById('delete_modal_backdrop');
 const editAmount = document.getElementById('edit_amount');
 const editCurrency = document.getElementById('edit_currency');
 const token = localStorage.getItem(tokenKey);
 let editingExpenseId = null;
+let deletingExpenseId = null;
 
 if (!token) {
     window.location.href = '/login';
@@ -214,7 +230,7 @@ async function loadExpenses() {
                 <span class="muted">status: ${item.status} | cotacao: ${item.exchange_rate ?? '-'} | id: ${item.id}</span>
                 <div class="item-actions">
                     <button class="edit" onclick="openEditModal(${item.id}, '${item.amount_original}', '${item.currency_code}')">Editar</button>
-                    <button class="remove" onclick="deleteExpense(${item.id})">Apagar</button>
+                    <button class="remove" onclick="openDeleteModal(${item.id})">Apagar</button>
                 </div>
             </div>
         `).join('');
@@ -246,11 +262,22 @@ async function saveEditExpense() {
     } catch (_) {}
 }
 
-async function deleteExpense(id) {
-    if (!confirm('Deseja apagar esta despesa?')) return;
+function openDeleteModal(id) {
+    deletingExpenseId = id;
+    deleteBackdrop.classList.add('show');
+}
 
+function closeDeleteModal(event = null) {
+    if (event && event.target !== deleteBackdrop) return;
+    deletingExpenseId = null;
+    deleteBackdrop.classList.remove('show');
+}
+
+async function confirmDeleteExpense() {
+    if (!deletingExpenseId) return;
     try {
-        await api(`expenses/${id}`, 'DELETE');
+        await api(`expenses/${deletingExpenseId}`, 'DELETE');
+        closeDeleteModal();
         loadExpenses();
     } catch (_) {}
 }
