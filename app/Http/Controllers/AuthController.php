@@ -16,7 +16,13 @@ class AuthController extends Controller
     {
         $address = $cepService->lookup($request->validated('cep'));
 
-        if ($address === null || $address['city'] === '' || $address['state'] === '') {
+        if (
+            $address === null
+            || $address['street'] === ''
+            || $address['neighborhood'] === ''
+            || $address['city'] === ''
+            || $address['state'] === ''
+        ) {
             throw ValidationException::withMessages([
                 'cep' => 'CEP invalido ou inexistente.',
             ]);
@@ -29,7 +35,11 @@ class AuthController extends Controller
             'cpf' => $request->validated('cpf'),
             'cep' => $request->validated('cep'),
             'street' => $address['street'],
+            'house_number' => $request->validated('house_number'),
             'neighborhood' => $address['neighborhood'],
+            'complement' => trim((string) ($request->validated('complement') ?? '')) !== ''
+                ? $request->validated('complement')
+                : $address['complement'],
             'city' => $address['city'],
             'state' => $address['state'],
         ]);

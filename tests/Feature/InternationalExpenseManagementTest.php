@@ -31,6 +31,11 @@ class InternationalExpenseManagementTest extends TestCase
             'password_confirmation' => '12345678',
             'cpf' => '11111111111',
             'cep' => '01001000',
+            'street' => 'Praca da Se',
+            'house_number' => '100',
+            'neighborhood' => 'Se',
+            'city' => 'Sao Paulo',
+            'state' => 'SP',
         ]);
 
         $response->assertStatus(422)->assertJsonValidationErrors(['cpf']);
@@ -54,6 +59,11 @@ class InternationalExpenseManagementTest extends TestCase
             'password_confirmation' => '12345678',
             'cpf' => '11144477735',
             'cep' => '01001000',
+            'street' => 'Praca da Se',
+            'house_number' => '100',
+            'neighborhood' => 'Se',
+            'city' => 'Sao Paulo',
+            'state' => 'SP',
         ];
 
         $this->postJson('/api/register', $payload)->assertCreated();
@@ -62,6 +72,25 @@ class InternationalExpenseManagementTest extends TestCase
             ...$payload,
             'email' => 'maria2@example.com',
         ])->assertStatus(422)->assertJsonValidationErrors(['cpf']);
+    }
+
+    public function test_register_rejects_cep_with_letters(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'name' => 'Maria',
+            'email' => 'maria.cep@example.com',
+            'password' => '12345678',
+            'password_confirmation' => '12345678',
+            'cpf' => '11144477735',
+            'cep' => '0100AB00',
+            'street' => 'Rua qualquer',
+            'house_number' => '10',
+            'neighborhood' => 'Bairro',
+            'city' => 'Cidade',
+            'state' => 'AM',
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['cep']);
     }
 
     public function test_user_can_only_access_own_expenses(): void

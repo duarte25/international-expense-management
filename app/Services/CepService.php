@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 class CepService
 {
     /**
-     * @return array{street:string, neighborhood:string, city:string, state:string}|null
+     * @return array{street:string, neighborhood:string, complement:string, city:string, state:string}|null
      */
     public function lookup(string $cep): ?array
     {
@@ -33,6 +33,7 @@ class CepService
         return [
             'street' => (string) ($data['logradouro'] ?? ''),
             'neighborhood' => (string) ($data['bairro'] ?? ''),
+            'complement' => (string) ($data['complemento'] ?? ''),
             'city' => (string) ($data['localidade'] ?? ''),
             'state' => (string) ($data['uf'] ?? ''),
         ];
