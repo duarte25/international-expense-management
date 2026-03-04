@@ -236,6 +236,7 @@
             font-weight: 600;
         }
 
+        /*
         .debug {
             margin-top: 12px;
             border: 1px solid #e0d6ca;
@@ -263,6 +264,7 @@
             font-family: ui-monospace, Menlo, Consolas, monospace;
             min-height: 78px;
         }
+        */
 
         @media (max-width: 760px) {
             .grid { grid-template-columns: 1fr; }
@@ -376,16 +378,18 @@
             <div id="feedback" class="feedback" style="display:none;"></div>
         </form>
 
+        <!--
         <details class="debug">
             <summary>Debug da API (opcional)</summary>
             <pre id="res">{}</pre>
         </details>
+        -->
     </section>
 </div>
 
 <script>
 const tokenKey = 'iem_api_token';
-const resBox = document.getElementById('res');
+// const resBox = document.getElementById('res');
 const feedbackBox = document.getElementById('feedback');
 let cepDebounce;
 let lastCepLookup = '';
@@ -395,9 +399,9 @@ if (localStorage.getItem(tokenKey)) {
     window.location.href = '/dashboard';
 }
 
-function show(data) {
-    resBox.textContent = JSON.stringify(data, null, 2);
-}
+// function show(data) {
+//     resBox.textContent = JSON.stringify(data, null, 2);
+// }
 
 function setFeedback(text, type = '') {
     feedbackBox.style.display = text ? 'block' : 'none';
@@ -590,7 +594,7 @@ async function registerUser() {
 
         let data = {};
         try { data = await res.json(); } catch {}
-        show({ status: res.status, data });
+        // show({ status: res.status, data });
 
         if (res.ok && data.token) {
             setFeedback('Cadastro realizado com sucesso. Redirecionando...', 'ok');

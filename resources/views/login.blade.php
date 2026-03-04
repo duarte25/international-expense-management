@@ -43,21 +43,21 @@
         <button onclick="login()">Entrar</button>
 
         <p style="margin-top:12px;">Nao tem conta? <a href="/register">Criar cadastro</a></p>
-        <div id="res" class="res">{}</div>
+        <!-- <div id="res" class="res">{}</div> -->
     </div>
 </div>
 
 <script>
 const tokenKey = 'iem_api_token';
-const resBox = document.getElementById('res');
+// const resBox = document.getElementById('res');
 
 if (localStorage.getItem(tokenKey)) {
     window.location.href = '/dashboard';
 }
 
-function show(data) {
-    resBox.textContent = JSON.stringify(data, null, 2);
-}
+// function show(data) {
+//     resBox.textContent = JSON.stringify(data, null, 2);
+// }
 
 async function login() {
     const payload = {
@@ -73,7 +73,7 @@ async function login() {
 
     let data = {};
     try { data = await res.json(); } catch {}
-    show({ status: res.status, data });
+    // show({ status: res.status, data });
 
     if (res.ok && data.token) {
         localStorage.setItem(tokenKey, data.token);

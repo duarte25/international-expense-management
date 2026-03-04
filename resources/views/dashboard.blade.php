@@ -122,10 +122,12 @@
         </section>
     </div>
 
+    <!--
     <section class="card" style="margin-top:12px;">
         <h2>Resposta da API</h2>
         <div id="res" class="res">{}</div>
     </section>
+    -->
 </div>
 
 <div id="edit_modal_backdrop" class="modal-backdrop" onclick="closeEditModal(event)">
@@ -166,7 +168,7 @@
 
 <script>
 const tokenKey = 'iem_api_token';
-const resBox = document.getElementById('res');
+// const resBox = document.getElementById('res');
 const listBox = document.getElementById('list');
 const totalBox = document.getElementById('total_brl');
 const editBackdrop = document.getElementById('edit_modal_backdrop');
@@ -181,9 +183,9 @@ if (!token) {
     window.location.href = '/login';
 }
 
-function show(data) {
-    resBox.textContent = JSON.stringify(data, null, 2);
-}
+// function show(data) {
+//     resBox.textContent = JSON.stringify(data, null, 2);
+// }
 
 function formatBrl(value) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
@@ -202,7 +204,7 @@ async function api(path, method='GET', body=null) {
 
     let data = {};
     try { data = await res.json(); } catch {}
-    show({ status: res.status, data });
+    // show({ status: res.status, data });
 
     if (res.status === 401) {
         localStorage.removeItem(tokenKey);
