@@ -1,4 +1,4 @@
-# Teste 02 - Gestao de Despesas Internacionais
+# Gestao de Despesas Internacionais
 
 API em Laravel para:
 - cadastro de usuario com validacao de CPF e consulta de CEP;
@@ -7,7 +7,7 @@ API em Laravel para:
 
 ## Requisitos
 - Docker e Docker Compose
-- Opcional (modo local): PHP 8.3+ com extensoes `mbstring`, `xml`, `xmlwriter`, `dom`, `pdo_pgsql`
+- Opcional (modo local): PHP 8.4+ com extensoes `mbstring`, `xml`, `xmlwriter`, `dom`, `pdo_pgsql`
 - Opcional (modo local): Composer instalado
 
 ## Stack usada
@@ -16,23 +16,30 @@ API em Laravel para:
 - PostgreSQL (configuravel no `.env`)
 - Sanctum (tokens para API)
 
-## Subindo so o banco com Docker Compose (porta 5433)
-Ja existe um `compose.yaml` para criar o Postgres do projeto sem conflitar com outro container na `5432`.
-
-1. Suba o banco:
+## Rodar tudo so com Docker
+1. Suba a aplicacao completa (API + PostgreSQL):
 ```bash
 docker compose up --build -d
 ```
 
-2. Rode migrations no Laravel local:
-```bash
-php artisan migrate
+2. A API fica disponivel em:
+```text
+http://localhost:8000
 ```
 
-3. Suba a API:
+3. Para parar os containers:
 ```bash
-php artisan serve
+docker compose down
 ```
+
+4. Para limpar tambem o volume do banco:
+```bash
+docker compose down -v
+```
+
+Observacoes:
+- As migrations rodam automaticamente no startup do container da API.
+- Se o arquivo `.env` nao existir no container, ele e criado a partir do `.env.example`.
 
 ## Rodando local (sem Docker)
 1. Garanta PHP com extensoes necessarias:
@@ -53,7 +60,7 @@ php artisan serve
 ```
 
 ## Endpoints
-Base (local): `http://127.0.0.1:8000/api`
+Base (Docker): `http://127.0.0.1:8000/api`
 
 - `POST /register`
 - `POST /login`

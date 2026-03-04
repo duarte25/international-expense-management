@@ -1,9 +1,32 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iem-app
+    restart: unless-stopped
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres_iem
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-international_expense_management}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres_iem:
+        condition: service_healthy
+    networks:
+      - iem_net
+
   postgres_iem:
     image: postgres:16-alpine
     container_name: iem-postgres
     restart: unless-stopped
-    network_mode: bridge
     environment:
       POSTGRES_DB: ${DB_DATABASE:-international_expense_management}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
@@ -12,6 +35,8 @@ services:
       - "${PG_HOST_PORT:-5433}:5432"
     volumes:
       - iem_pg_data:/var/lib/postgresql/data
+    networks:
+      - iem_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-international_expense_management}"]
       interval: 10s
@@ -21,3 +46,10 @@ services:
 volumes:
   iem_pg_data:
     driver: local
+
+networks:
+  iem_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.250.37.0/24
